@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- 阿里云 DashScope -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">dashscope.aliyuncs.com</domain>
+        <domain includeSubdomains="true">aliyuncs.com</domain>
+        <pin-set expiration="2027-01-01">
+            <!-- 证书绑定（生产环境需要配置） -->
+        </pin-set>
+    </domain-config>
+    
+    <!-- 智谱 AI -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">open.bigmodel.cn</domain>
+    </domain-config>
+    
+    <!-- 百度文心一言 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">aip.baidubce.com</domain>
+    </domain-config>
+    
+    <!-- 讯飞星火 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">xf-yun.com</domain>
+    </domain-config>
+    
+    <!-- 零一万物 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">lingyiwanwu.com</domain>
+    </domain-config>
+    
+    <!-- 月之暗面 -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">moonshot.cn</domain>
+    </domain-config>
+</network-security-config>

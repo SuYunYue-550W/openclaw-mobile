@@ -36,7 +36,9 @@ android {
             val keystorePropertiesFile = rootProject.file("keystore.properties")
             if (keystorePropertiesFile.exists()) {
                 val keystoreProperties = java.util.Properties()
-                keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
+                val fileInputStream = java.io.FileInputStream(keystorePropertiesFile)
+                keystoreProperties.load(fileInputStream)
+                fileInputStream.close()
                 
                 storePassword = keystoreProperties["storePassword"] as String
                 keyPassword = keystoreProperties["keyPassword"] as String

@@ -3,7 +3,6 @@ package com.openclaw.mobile.di
 import android.content.Context
 import com.openclaw.mobile.api.ModelRepository
 import com.openclaw.mobile.inference.LocalInferenceEngine
-import com.openclaw.mobile.inference.OnnxInferenceEngine
 import com.openclaw.mobile.security.SecureStorage
 import dagger.Module
 import dagger.Provides
@@ -41,13 +40,5 @@ object AppModule {
         @ApplicationContext context: Context
     ): LocalInferenceEngine {
         return LocalInferenceEngine(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideOnnxInferenceEngine(
-        @ApplicationContext context: Context
-    ): OnnxInferenceEngine {
-        return OnnxInferenceEngine(context)
     }
 }

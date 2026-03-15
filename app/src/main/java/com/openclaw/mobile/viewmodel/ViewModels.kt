@@ -34,7 +34,7 @@ class ChatViewModel @Inject constructor(
         if (content.isBlank()) return
 
         viewModelScope.launch {
-            val userMessage = Message.user(content)
+            val userMessage = Message(role = "user", content = content)
             _messages.value = _messages.value + userMessage
             _uiState.value = ChatUiState.Loading
 
@@ -67,7 +67,7 @@ class ChatViewModel @Inject constructor(
         result.fold(
             onSuccess = { response ->
                 val assistantMessage = response.output.choices.firstOrNull()?.message
-                    ?: Message.assistant("")
+                    ?: Message(role = "assistant", content = "")
                 _messages.value = _messages.value + assistantMessage
                 _uiState.value = ChatUiState.Success
             },

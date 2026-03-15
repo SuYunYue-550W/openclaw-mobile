@@ -23,6 +23,7 @@
 
     <!-- 后台服务 -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <!-- 振动反馈 -->
@@ -54,12 +55,6 @@
         <!-- 模型下载服务 -->
         <service
             android:name=".service.ModelDownloadService"
-            android:exported="false"
-            android:foregroundServiceType="dataSync" />
-
-        <!-- 本地推理服务 -->
-        <service
-            android:name=".service.InferenceService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 

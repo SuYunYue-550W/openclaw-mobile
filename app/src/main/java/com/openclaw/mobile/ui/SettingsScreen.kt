@@ -16,7 +16,9 @@ import androidx.compose.ui.unit.dp
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen() {
+fun SettingsScreen(
+    onNavigateToApiConfig: () -> Unit = {}
+) {
     val scrollState = rememberScrollState()
 
     Column(
@@ -34,27 +36,17 @@ fun SettingsScreen() {
         // API 配置区域
         SettingsSection(title = "API 配置", icon = Icons.Default.Cloud) {
             SettingsItem(
-                title = "阿里云 DashScope",
-                subtitle = "配置通义千问 API Key",
-                icon = Icons.Default.Cloud
-            )
-            
-            SettingsItem(
-                title = "智谱 AI",
-                subtitle = "配置 ChatGLM API Key",
-                icon = Icons.Default.Api
-            )
-
-            SettingsItem(
-                title = "百度文心一言",
-                subtitle = "配置 ERNIE Bot API Key",
-                icon = Icons.Default.Api
-            )
-
-            SettingsItem(
-                title = "讯飞星火",
-                subtitle = "配置 Spark API Key",
-                icon = Icons.Default.Api
+                title = "API Key 管理",
+                subtitle = "配置各大模型厂商的 API Key",
+                icon = Icons.Default.Cloud,
+                trailing = {
+                    Icon(
+                        Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                onClick = onNavigateToApiConfig
             )
         }
 

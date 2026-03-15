@@ -1,69 +1,194 @@
-# OpenClaw Android 打包指南
+# OpenClaw Mobile 构建指南
 
-## 📦 构建变体
+详细的构建步骤和常见问题解决方案。
 
-### Debug 版本
-- 包含调试信息
-- 不启用代码混淆
-- 可用于日常开发测试
+## 📋 目录
 
-### Release 版本
-- 启用 ProGuard 混淆
-- 启用资源压缩
-- 签名后发布
+1. [环境准备](#环境准备)
+2. [克隆项目](#克隆项目)
+3. [配置项目](#配置项目)
+4. [构建 Debug 版本](#构建-debug-版本)
+5. [构建 Release 版本](#构建-release-版本)
+6. [签名配置](#签名配置)
+7. [常见问题](#常见问题)
 
 ---
 
-## 🔑 配置签名
+## 环境准备
+
+### 必需软件
+
+| 软件 | 版本 | 下载链接 |
+|------|------|---------|
+| Android Studio | Hedgehog (2024.1)+ | [下载](https://developer.android.com/studio) |
+| JDK | 17+ | [下载](https://adoptium.net/) |
+| Android SDK | 34 | Android Studio 内置 |
+| NDK | 25+ (可选) | Android Studio SDK Manager |
+
+### 环境变量配置
+
+#### Windows
+
+```powershell
+# 添加到系统环境变量
+ANDROID_HOME = C:\Users\<你的用户名>\AppData\Local\Android\Sdk
+JAVA_HOME = C:\Program Files\Java\jdk-17
+PATH = %PATH%;%ANDROID_HOME%\tools;%ANDROID_HOME%\platform-tools
+```
+
+#### macOS/Linux
+
+```bash
+# 添加到 ~/.bashrc 或 ~/.zshrc
+export ANDROID_HOME=$HOME/Android/Sdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+export PATH=$PATH:$ANDROID_HOME/tools:$ANDROID_HOME/platform-tools
+```
+
+### 验证环境
+
+```bash
+# 检查 Java
+java -version
+# 应显示：java version "17.x.x"
+
+# 检查 Android SDK
+adb version
+# 应显示：Android Debug Bridge version x.x.x
+
+# 检查 Gradle
+./gradlew --version
+```
+
+---
+
+## 克隆项目
+
+```bash
+# 克隆仓库
+git clone https://github.com/openclaw/openclaw-mobile.git
+cd openclaw-mobile
+
+# 拉取子模块（如果有）
+git submodule update --init --recursive
+```
+
+---
+
+## 配置项目
+
+### 1. 同步 Gradle
+
+使用 Android Studio:
+- 打开项目
+- 等待 Gradle 自动同步
+- 或点击 `File > Sync Project with Gradle Files`
+
+使用命令行:
+```bash
+./gradlew --refresh-dependencies
+```
+
+### 2. 配置本地属性
+
+创建 `local.properties` 文件:
+
+```properties
+# Windows 示例
+sdk.dir=C\:\\Users\\<你的用户名>\\AppData\\Local\\Android\\Sdk
+
+# macOS 示例
+sdk.dir=/Users/<你的用户名>/Library/Android/sdk
+
+# Linux 示例
+sdk.dir=/home/<你的用户名>/Android/Sdk
+```
+
+### 3. 配置签名（Release 版本需要）
+
+创建 `keystore.properties`:
+
+```properties
+storePassword=your_store_password
+keyPassword=your_key_password
+keyAlias=your_key_alias
+storeFile=../keystore.jks
+```
+
+---
+
+## 构建 Debug 版本
+
+### 使用 Android Studio
+
+1. 选择 `Build > Build Bundle(s) / APK(s) > Build APK(s)`
+2. 等待构建完成
+3. APK 位置：`app/build/outputs/apk/debug/app-debug.apk`
+
+### 使用命令行
+
+```bash
+# Windows
+gradlew assembleDebug
+
+# macOS/Linux
+./gradlew assembleDebug
+```
+
+输出位置:
+```
+app/build/outputs/apk/debug/app-debug.apk
+```
+
+### 安装到设备
+
+```bash
+# 通过 USB 连接设备
+adb devices
+
+# 安装 APK
+adb install app/build/outputs/apk/debug/app-debug.apk
+
+# 如果已安装，覆盖安装
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+## 构建 Release 版本
 
 ### 1. 生成签名密钥
 
-```powershell
-# 在项目中执行
-cd C:\Projects\OpenClaw-Android
+```bash
+# 使用 keytool 生成
+keytool -genkey -v -keystore keystore.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -alias openclaw
 
-# 使用 keytool 生成密钥库
-keytool -genkey -v -keystore openclaw-release-key.keystore -alias openclaw -keyalg RSA -keysize 2048 -validity 10000
+# 按提示输入：
+# - 密钥库密码
+# - 姓名
+# - 组织名称
+# - 城市
+# - 省份
+# - 国家代码
 ```
 
-按提示输入：
-- 密钥库密码
-- 姓名、组织、城市等信息
+### 2. 配置签名
 
-### 2. 创建 keystore.properties
-
-在项目根目录创建 `keystore.properties`：
-
-```properties
-storePassword=你的密钥库密码
-keyPassword=你的密钥密码
-keyAlias=openclaw
-storeFile=../openclaw-release-key.keystore
-```
-
-**注意：** 将此文件添加到 `.gitignore`，不要提交到版本控制！
-
-### 3. 修改 build.gradle.kts
-
-在 `app/build.gradle.kts` 的 `android` 块中添加：
+编辑 `app/build.gradle.kts`:
 
 ```kotlin
 android {
-    // ... 其他配置
-    
+    ...
     signingConfigs {
         create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            val keystoreProperties = java.util.Properties()
-            keystoreProperties.load(java.io.FileInputStream(keystorePropertiesFile))
-            
-            storePassword = keystoreProperties["storePassword"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            keyAlias = keystoreProperties["keyAlias"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
+            storeFile = file("../keystore.jks")
+            storePassword = System.getenv("STORE_PASSWORD") ?: keystoreProperties["storePassword"] as String
+            keyAlias = System.getenv("KEY_ALIAS") ?: keystoreProperties["keyAlias"] as String
+            keyPassword = System.getenv("KEY_PASSWORD") ?: keystoreProperties["keyPassword"] as String
         }
     }
-    
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -78,227 +203,319 @@ android {
 }
 ```
 
----
+### 3. 构建 Release APK
 
-## 🏗️ 构建命令
+```bash
+# 命令行构建
+./gradlew assembleRelease
 
-### 命令行构建
-
-```powershell
-# 进入项目目录
-cd C:\Projects\OpenClaw-Android
-
-# 清理项目
-gradlew clean
-
-# 构建 Debug APK
-gradlew assembleDebug
-
-# 构建 Release APK
-gradlew assembleRelease
-
-# 构建 Release Bundle (用于 Google Play)
-gradlew bundleRelease
-
-# 安装到设备（需要连接设备）
-gradlew installDebug
+# 输出位置
+app/build/outputs/apk/release/app-release.apk
 ```
 
-### Android Studio 构建
+### 4. 验证 APK
 
-1. **Build → Generate Signed Bundle / APK**
-2. 选择 **APK** 或 **Android App Bundle**
-3. 选择密钥库文件
-4. 输入密码
-5. 选择 **release** 变体
-6. 点击 **Finish**
-
----
-
-## 📂 输出文件位置
-
-```
-app/build/outputs/apk/
-├── debug/
-│   └── app-debug.apk              # Debug 版本
-└── release/
-    ├── app-release.apk            # Release APK
-    └── app-release-unaligned.apk  # 未对齐版本（不要使用）
-
-app/build/outputs/bundle/
-└── release/
-    └── app-release.aab            # Google Play Bundle
-```
-
----
-
-## 📱 安装测试
-
-### 安装到模拟器/真机
-
-```powershell
-# 使用 adb 安装
-adb install app/build/outputs/apk/release/app-release.apk
-
-# 如果已安装，覆盖安装
-adb install -r app/build/outputs/apk/release/app-release.apk
-
-# 卸载
-adb uninstall com.openclaw.mobile
-```
-
-### 验证安装
-
-```powershell
-# 查看已安装的应用
-adb shell pm list packages | grep openclaw
-
-# 查看应用信息
-adb shell dumpsys package com.openclaw.mobile
-```
-
----
-
-## 🔍 验证签名
-
-```powershell
-# 验证 APK 签名
+```bash
+# 验证签名
 apksigner verify --verbose app/build/outputs/apk/release/app-release.apk
 
-# 查看签名信息
-apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+# 查看 APK 信息
+aapt dump badging app/build/outputs/apk/release/app-release.apk
 ```
 
 ---
 
-## 📊 优化建议
+## 签名配置
 
-### 1. 启用 R8 全模式
+### 使用环境变量（推荐用于 CI/CD）
 
-在 `gradle.properties` 中：
-```properties
-android.enableR8.fullMode=true
+```bash
+# 设置环境变量
+export STORE_PASSWORD=your_password
+export KEY_PASSWORD=your_password
+export KEY_ALIAS=your_alias
+
+# 构建
+./gradlew assembleRelease
 ```
 
-### 2. 启用构建缓存
+### 使用 GitHub Actions
 
+```yaml
+# .github/workflows/release.yml
+name: Release Build
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      
+      - name: Decode Keystore
+        run: echo ${{ secrets.KEYSTORE }} | base64 --decode > keystore.jks
+      
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/app-release.apk
+```
+
+---
+
+## 常见问题
+
+### Q1: Gradle 同步失败
+
+**错误:** `Could not resolve all dependencies`
+
+**解决方案:**
+```bash
+# 清除 Gradle 缓存
+./gradlew cleanBuildCache
+
+# 删除 .gradle 目录
+rm -rf .gradle
+
+# 重新同步
+./gradlew --refresh-dependencies
+```
+
+### Q2: SDK 版本不匹配
+
+**错误:** `failed to find target with hash string 'android-34'`
+
+**解决方案:**
+1. 打开 Android Studio
+2. `Tools > SDK Manager`
+3. 安装 Android 34 (API 34)
+4. 重新同步
+
+### Q3: 内存不足
+
+**错误:** `Java heap space` 或 `GC overhead limit exceeded`
+
+**解决方案:**
+编辑 `gradle.properties`:
 ```properties
+org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m
+```
+
+### Q4: NDK 未找到
+
+**错误:** `NDK is missing a "platforms" directory`
+
+**解决方案:**
+1. 打开 SDK Manager
+2. 安装 NDK (Side by side) 25.x
+3. 在 `local.properties` 添加:
+```properties
+ndk.dir=C\:\\Users\\<用户名>\\AppData\\Local\\Android\\Sdk\\ndk\\25.2.9519653
+```
+
+### Q5: 构建速度慢
+
+**优化方案:**
+```properties
+# gradle.properties
+org.gradle.parallel=true
 org.gradle.caching=true
-android.enableBuildCache=true
+org.gradle.daemon=true
+org.gradle.configureondemand=true
 ```
 
-### 3. 增加 Gradle 内存
+### Q6: ProGuard 混淆后崩溃
 
-```properties
-org.gradle.jvmargs=-Xmx4096m -Dfile.encoding=UTF-8
+**解决方案:**
+编辑 `proguard-rules.pro`:
+```proguard
+# 保留数据类
+-keep class com.openclaw.mobile.api.** { *; }
+-keep class com.openclaw.mobile.viewmodel.** { *; }
+
+# 保留 Gson 序列化
+-keepattributes Signature
+-keepattributes *Annotation*
 ```
 
-### 4. 并行构建
+### Q7: Hilt 注入失败
+
+**错误:** `@HiltAndroidApp` 未处理
+
+**解决方案:**
+1. 确保 `OpenClawApplication` 正确注解
+2. 检查 `build.gradle.kts` 中 KSP 配置
+3. 清理并重建:
+```bash
+./gradlew clean
+./gradlew build
+```
+
+### Q8: Compose 编译器错误
+
+**错误:** `Compose Compiler requires Kotlin 1.9.0 or higher`
+
+**解决方案:**
+检查版本匹配:
+```kotlin
+// build.gradle.kts (project)
+id("org.jetbrains.kotlin.android") version "1.9.23"
+
+// build.gradle.kts (app)
+composeOptions {
+    kotlinCompilerExtensionVersion = "1.5.13"  // 对应 Kotlin 1.9.23
+}
+```
+
+---
+
+## 性能优化
+
+### 启用构建缓存
 
 ```properties
+# gradle.properties
+org.gradle.caching=true
 org.gradle.parallel=true
 ```
 
----
+### 配置 R8 优化
 
-## 🚨 常见问题
-
-### Q1: 构建失败 - "SDK not found"
-**解决：** 在 `local.properties` 中正确配置 SDK 路径
-```properties
-sdk.dir=D:\\Android\\SDK
+```kotlin
+// app/build.gradle.kts
+android {
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
+    }
+}
 ```
 
-### Q2: 签名失败 - "Keystore was tampered with, or password was incorrect"
-**解决：** 检查密码是否正确，或重新生成密钥库
+### 减少 APK 大小
 
-### Q3: ProGuard 导致崩溃
-**解决：** 在 `proguard-rules.pro` 中添加保留规则
-```proguard
--keep class com.openclaw.mobile.** { *; }
-```
-
-### Q4: APK 太大
-**解决：**
-1. 启用资源压缩：`isShrinkResources = true`
-2. 使用 Android App Bundle (.aab)
-3. 拆分 APK (按 ABI 或屏幕密度)
-
----
-
-## 📦 发布到应用商店
-
-### Google Play
-
-1. 构建 AAB 文件：
-   ```powershell
-   gradlew bundleRelease
-   ```
-
-2. 上传到 [Google Play Console](https://play.google.com/console)
-
-3. 填写应用信息、截图、隐私政策等
-
-### 国内应用商店
-
-1. 构建 APK：
-   ```powershell
-   gradlew assembleRelease
-   ```
-
-2. 准备材料：
-   - 应用截图
-   - 应用描述
-   - 隐私政策
-   - ICP 备案（部分商店需要）
-
-3. 提交到各商店：
-   - 华为应用市场
-   - 小米应用商店
-   - OPPO 软件商店
-   - vivo 应用商店
-   - 应用宝
-
----
-
-## 🔐 安全注意事项
-
-1. **保护密钥库文件**
-   - 不要提交到 Git
-   - 备份到安全位置
-   - 使用强密码
-
-2. **API Key 管理**
-   - 不要硬编码在代码中
-   - 使用加密存储
-   - 考虑使用后端代理
-
-3. **签名密钥备份**
-   - 丢失后无法更新应用
-   - 建议多重备份（本地 + 云端 + 物理介质）
-
----
-
-## 📈 性能监控
-
-### APK 大小分析
-
-```powershell
-# 使用 Android Studio
-Build → Analyze APK...
-
-# 选择生成的 APK 文件
-# 查看各部分占用空间
-```
-
-### 方法数统计
-
-```powershell
-# 查看方法数（是否超过 64K）
-gradlew app:dependencies
+```kotlin
+android {
+    defaultConfig {
+        // 只保留需要的语言
+        resConfigs("zh", "en")
+        
+        // 只保留需要的 ABI
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+        }
+    }
+}
 ```
 
 ---
 
-**最后更新：** 2026-03-14  
-**文档版本：** 1.0
+## 调试技巧
+
+### 启用详细日志
+
+```kotlin
+// BuildConfig.DEBUG 自动在 Debug 版本为 true
+if (BuildConfig.DEBUG) {
+    HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+}
+```
+
+### 使用 Layout Inspector
+
+1. 运行应用
+2. `Tools > Layout Inspector`
+3. 检查 UI 层次结构
+
+### 性能分析
+
+1. `Tools > Profiler`
+2. 监控 CPU、内存、网络
+3. 识别性能瓶颈
+
+---
+
+## 持续集成
+
+### GitHub Actions 配置
+
+```yaml
+# .github/workflows/android-ci.yml
+name: Android CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+    
+    - name: Build with Gradle
+      run: ./gradlew build
+    
+    - name: Run tests
+      run: ./gradlew test
+    
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
+```
+
+---
+
+## 参考资源
+
+- [Android 开发者文档](https://developer.android.com/)
+- [Gradle 用户指南](https://docs.gradle.org/)
+- [Jetpack Compose 文档](https://developer.android.com/jetpack/compose)
+- [Hilt 使用指南](https://dagger.dev/hilt/)
+
+---
+
+<div align="center">
+
+**构建愉快！🦞**
+
+遇到问题？[提交 Issue](https://github.com/openclaw/openclaw-mobile/issues)
+
+</div>

@@ -21,33 +21,11 @@ android {
             useSupportLibrary = true
         }
 
-        // NDK 配置 - 支持多种 CPU 架构
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
-        }
-
         // 本地模型配置
         buildConfigField("String", "DEFAULT_MODEL_PATH", "\"/models/qwen2.5-1.5b\"")
         buildConfigField("Long", "MAX_MODEL_SIZE_MB", "2048L")
     }
 
-    signingConfigs {
-        create("release") {
-            val keystorePropertiesFile = rootProject.file("keystore.properties")
-            if (keystorePropertiesFile.exists()) {
-                val keystoreProperties = java.util.Properties()
-                val fileInputStream = java.io.FileInputStream(keystorePropertiesFile)
-                keystoreProperties.load(fileInputStream)
-                fileInputStream.close()
-                
-                storePassword = keystoreProperties["storePassword"] as String
-                keyPassword = keystoreProperties["keyPassword"] as String
-                keyAlias = keystoreProperties["keyAlias"] as String
-                storeFile = file(keystoreProperties["storeFile"] as String)
-            }
-        }
-    }
-    
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -56,7 +34,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "API_BASE_URL", "\"https://dashscope.aliyuncs.com\"")
         }
         debug {
@@ -80,7 +57,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.10"
+        kotlinCompilerExtensionVersion = "1.5.13"
     }
 
     packaging {
@@ -89,13 +66,11 @@ android {
         }
     }
 
-    // NDK 配置
-    externalNativeBuild {
-        cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
-        }
+    dependenciesInfo {
+        includeInApk = true
+        includeInBundle = true
     }
+    buildToolsVersion = "34.0.0"
 }
 
 dependencies {
@@ -110,6 +85,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
     implementation("androidx.navigation:navigation-compose:2.8.0")
 
     // Hilt Dependency Injection
@@ -133,16 +109,13 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
 
     // Security - Tink Encryption
-    implementation("com.google.crypto.tink:tink-android:1.13.0")
+    implementation("com.google.crypto.tink:tink-android:1.20.0")
 
     // Local LLM Inference - MLC LLM
     // implementation("org.mlc:mlc4j:0.1.0")  // 需要从源码编译
     
     // ONNX Runtime (备选方案)
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.18.0")
-
-    // Alibaba Cloud DashScope SDK
-    implementation("com.alibaba.cloud:dashscope-sdk:2.9.0")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")

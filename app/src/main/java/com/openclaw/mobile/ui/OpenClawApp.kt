@@ -6,9 +6,11 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.openclaw.mobile.viewmodel.ChatViewModel
 
 /**
  * 应用主界面
@@ -17,6 +19,7 @@ import androidx.navigation.compose.rememberNavController
 fun OpenClawApp() {
     val navController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
+    val viewModel: ChatViewModel = hiltViewModel()
 
     Scaffold(
         bottomBar = {
@@ -64,7 +67,21 @@ fun OpenClawApp() {
         ) {
             composable("chat") { ChatScreen() }
             composable("models") { ModelsScreen() }
-            composable("settings") { SettingsScreen() }
+            composable("settings") { 
+                SettingsScreen(
+                    onNavigateToApiConfig = {
+                        navController.navigate("api-config")
+                    }
+                ) 
+            }
+            composable("api-config") {
+                ApiConfigScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onSaveApiKey = { provider, key ->
+                        viewModel.saveApiKey(provider, key)
+                    }
+                )
+            }
         }
     }
 }

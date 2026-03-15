@@ -122,9 +122,9 @@ class ModelDownloadService : Service() {
         _downloadState.value = DownloadState.Downloading(
             modelId = modelId,
             progress = 0f,
-            downloadedBytes = 0,
-            totalBytes = 0,
-            speed = 0
+            downloadedBytes = 0L,
+            totalBytes = 0L,
+            speed = 0L
         )
         
         downloadJob = serviceScope.launch {
@@ -133,7 +133,7 @@ class ModelDownloadService : Service() {
                     context = this@ModelDownloadService,
                     modelId = modelId,
                     url = downloadUrl,
-                    onProgress = { progress, downloaded, total, speed ->
+                    onProgress = { progress: Float, downloaded: Long, total: Long, speed: Long ->
                         _downloadState.value = DownloadState.Downloading(
                             modelId = modelId,
                             progress = progress,
@@ -323,7 +323,7 @@ class DownloadTask(
                 }
                 
                 val progress = if (totalBytes > 0) {
-                    downloadedBytes.toFloat() / totalBytes
+                    downloadedBytes.toFloat() / totalBytes.toFloat()
                 } else {
                     0f
                 }

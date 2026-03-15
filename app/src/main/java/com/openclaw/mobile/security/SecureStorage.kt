@@ -48,21 +48,30 @@ class SecureStorage @Inject constructor(
     private val keysetHandle: KeysetHandle by lazy {
         // 生成或加载 Tink 密钥
         val prefs = context.getSharedPreferences("tink_keyset", Context.MODE_PRIVATE)
-        if (prefs.contains("keyset")) {
+        val keysetJson = prefs.getString("keyset", "") ?: ""
+        
+        return@lazy if (keysetJson.isNotEmpty()) {
             // 从存储加载
-            val keysetJson = prefs.getString("keyset", "") ?: ""
-            if (keysetJson.isNotEmpty()) {
-                return@lazy KeysetHandle.readWithNoSecrets(
-                    com.google.crypto.tink.JsonKeysetReader.withString(keysetJson)
-                )
+            try {
+                val keysetReader = com.google.crypto.tink.JsonKeysetReader.withString(keysetJson)
+                // 使用无密码的 KeysetHandle（密钥由 Android Keystore 保护）
+                KeysetHandle.read(keysetReader, com.google.crypto.tink.NoSecretKeysetManager.INSTANCE)
+            } catch (e: Exception) {
+                // 加载失败，生成新密钥
+                val newKeyset = KeysetHandle.generateNew(KeyTemplates.get("AES256_GCM"))
+                prefs.edit()
+                    .putString("keyset", newKeyset.toString())
+                    .apply()
+                newKeyset
             }
+        } else {
+            // 生成新密钥
+            val newKeyset = KeysetHandle.generateNew(KeyTemplates.get("AES256_GCM"))
+            prefs.edit()
+                .putString("keyset", newKeyset.toString())
+                .apply()
+            newKeyset
         }
-        // 生成新密钥
-        val newKeyset = KeysetHandle.generateNew(KeyTemplates.get("AES256_GCM"))
-        prefs.edit()
-            .putString("keyset", newKeyset.toString())
-            .apply()
-        newKeyset
     }
 
     private val aead: Aead by lazy {

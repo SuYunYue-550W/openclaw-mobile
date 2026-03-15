@@ -9,9 +9,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.openclaw.mobile.inference.LocalInferenceEngine
 import com.openclaw.mobile.inference.LocalModelConfig
+import java.io.File
 
 /**
  * 模型管理界面
@@ -99,6 +101,15 @@ fun LocalModelsList() {
 fun LocalModelCard(model: LocalModelConfig) {
     var isDownloading by remember { mutableStateOf(false) }
     var downloadProgress by remember { mutableStateOf(0f) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val scope = rememberCoroutineScope()
+    
+    // 检查模型是否已下载
+    val isDownloaded = remember(model.id) {
+        val modelsDir = File(context.filesDir, "models")
+        val modelPath = File(modelsDir, model.id)
+        modelPath.exists() && modelPath.listFiles()?.isNotEmpty() == true
+    }
     
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -165,7 +176,22 @@ fun LocalModelCard(model: LocalModelConfig) {
                     }
                 }
 
-                if (isDownloading) {
+                if (isDownloaded) {
+                    AssistChip(
+                        onClick = { },
+                        label = { Text("已安装") },
+                        leadingIcon = {
+                            Icon(
+                                Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer
+                        )
+                    )
+                } else if (isDownloading) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -181,8 +207,13 @@ fun LocalModelCard(model: LocalModelConfig) {
                 } else {
                     FilledTonalButton(
                         onClick = {
-                            // TODO: 开始下载
+                            // 启动下载服务
                             isDownloading = true
+                            com.openclaw.mobile.service.ModelDownloadService.startDownload(
+                                context = context,
+                                modelId = model.id,
+                                downloadUrl = model.downloadUrl
+                            )
                         },
                         enabled = !isDownloading
                     ) {
@@ -198,7 +229,10 @@ fun LocalModelCard(model: LocalModelConfig) {
             
             OutlinedButton(
                 onClick = {
-                    // TODO: 打开浏览器跳转到下载页面
+                    // 打开浏览器跳转到下载页面
+                    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW)
+                    intent.data = android.net.Uri.parse(model.downloadUrl)
+                    context.startActivity(intent)
                 },
                 modifier = Modifier.align(Alignment.End)
             ) {

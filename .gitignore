@@ -1,5 +1,3 @@
-# OpenClaw Android .gitignore
-
 # Built application files
 *.apk
 *.ap_
@@ -42,43 +40,57 @@ captures/
 # IntelliJ
 *.iml
 .idea/
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/gradle.xml
-.idea/assetWizardSettings.xml
-.idea/dictionaries
-.idea/libraries
-.idea/caches
-.idea/modules.xml
-.idea/misc.xml
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 .cxx/
 
 # Version control
-vcs.xml
+.svn/
 
-# lint
-lint/intermediates/
-lint/generated/
-lint/outputs/
-lint/tmp/
+# Fabric
+crashlytics.properties
+crashlytics-build.properties
 
-# Android Profiling
-*.hprof
-
-# Misc
-*.swp
-*.swo
-*~
-
-# Log files
+# Log Files
 *.log
 
-# Secret files
-.env
-.secrets/
+# Mobile 3rdparty
+*.jar
+!libs/*.jar
 
-# Screenshots (optional, uncomment to ignore)
-# screenshots/
+# Avoid memory leaks caused by the system
+*.hprof
+
+# Sensitive files
+keystore.jks
+*.pem
+*.p12
+*.pfx
+
+# API Keys and secrets
+*.env
+.env
+.env.local
+secrets.json
+config.local.json
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Downloaded models (too large for git)
+models/
+*.gguf
+*.bin
+*.safetensors
+
+# Termux specific
+.termux/

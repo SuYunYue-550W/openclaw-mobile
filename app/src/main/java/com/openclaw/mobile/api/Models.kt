@@ -24,12 +24,12 @@ data class Input(
 
 data class Message(
     @SerializedName("role") val role: String,
-    @SerializedName("content") val content
+    @SerializedName("content") val content: String
 ) {
     companion object {
-        fun system(content: String) = Message("system", content)
-        fun user(content: String) = Message("user", content)
-        fun assistant(content: String) = Message("assistant", content)
+        fun system(content: String): Message = Message("system", content)
+        fun user(content: String): Message = Message("user", content)
+        fun assistant(content: String): Message = Message("assistant", content)
     }
 }
 

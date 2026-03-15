@@ -26,10 +26,10 @@ interface DashScopeApi {
 }
 
 /**
- * 国内大模型 API 通用接口
+ * 国内大模型 API 通用接口（OpenAI 兼容格式）
  */
 interface DomesticModelApi {
-    @POST
+    @POST(".")
     suspend fun chat(
         @Header("Authorization") authorization: String,
         @Body request: QwenRequest
@@ -104,7 +104,7 @@ class ModelRepository @Inject constructor(
     }
 
     /**
-     * 调用国内其他大模型
+     * 调用国内其他大模型（OpenAI 兼容格式）
      */
     suspend fun callDomesticModel(
         model: DomesticModelConfig,
@@ -113,11 +113,19 @@ class ModelRepository @Inject constructor(
     ): Result<QwenResponse> {
         return try {
             val client = createHttpClient()
+            
+            // 提取 baseUrl 的主机部分
+            val url = java.net.URL(model.baseUrl)
+            val baseUrl = "${url.protocol}://${url.host}:${if (url.port != -1) url.port else if (url.protocol == "https") 443 else 80}/"
+            val path = url.path
+            
             val retrofit = Retrofit.Builder()
-                .baseUrl(model.baseUrl)
+                .baseUrl(baseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
+            
+            // 使用动态 URL
             val api = retrofit.create(DomesticModelApi::class.java)
 
             val request = QwenRequest(
@@ -127,7 +135,8 @@ class ModelRepository @Inject constructor(
                 stream = false
             )
 
-            val response = api.chat("Bearer $apiKey", request)
+            // 使用 @Url 动态指定完整路径
+            val response = callWithDynamicUrl(client, model.baseUrl, apiKey, request)
             if (response.isSuccessful) {
                 response.body()?.let { Result.success(it) }
                     ?: Result.failure(Exception("响应为空"))
@@ -137,6 +146,38 @@ class ModelRepository @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+    
+    /**
+     * 使用动态 URL 调用 API
+     */
+    private suspend fun callWithDynamicUrl(
+        client: OkHttpClient,
+        url: String,
+        apiKey: String,
+        request: QwenRequest
+    ): Response<QwenResponse> {
+        val json = com.google.gson.Gson().toJson(request)
+        val requestBody = okhttp3.RequestBody.create(
+            okhttp3.MediaType.parse("application/json; charset=utf-8"),
+            json
+        )
+        
+        val httpRequest = okhttp3.Request.Builder()
+            .url(url)
+            .post(requestBody)
+            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Content-Type", "application/json")
+            .build()
+        
+        val response = client.newCall(httpRequest).execute()
+        val responseBody = response.body?.string() ?: ""
+        
+        // 创建响应
+        val gson = com.google.gson.Gson()
+        val qwenResponse = gson.fromJson(responseBody, QwenResponse::class.java)
+        
+        return Response.success(qwenResponse)
     }
 
     /**

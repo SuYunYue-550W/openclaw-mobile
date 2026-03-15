@@ -1,11 +1,15 @@
-# OpenClaw Mobile
+# OpenClaw Mobile 🦞
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Android CI](https://github.com/openclaw/openclaw-mobile/actions/workflows/android-ci.yml/badge.svg)](https://github.com/openclaw/openclaw-mobile/actions/workflows/android-ci.yml)
 [![Platform](https://img.shields.io/badge/Platform-Android-green.svg)](https://developer.android.com/)
 [![API](https://img.shields.io/badge/API-28%2B-brightgreen.svg)](https://android-arsenal.com/api?level=28)
 
-🤖 **OpenClaw Mobile** - 安全、私密的 Android 大模型聊天应用，支持本地部署和云端 API
+🤖 **安全、私密的 Android 大模型聊天应用** - 支持本地部署和云端 API
+
+> OpenClaw 项目的 Android 移动版本，让你随时随地使用大模型能力。
+
+---
 
 ## ✨ 特性
 
@@ -14,7 +18,6 @@
 - ✅ 动态权限管理
 - ✅ HTTPS + 证书绑定
 - ✅ 数据不上传云端
-- ✅ ProGuard 代码混淆
 
 ### ☁️ 云端 API 支持
 - 🟢 阿里云 DashScope (通义千问)
@@ -29,7 +32,6 @@
 - 🟢 ChatGLM3-6B
 - 🟢 MiniCPM-2B
 - 🟢 ONNX Runtime 推理
-- 🟢 断点续传下载
 
 ### 🎨 用户体验
 - 🟢 Material 3 设计
@@ -37,7 +39,28 @@
 - 🟢 深色模式
 - 🟢 响应式布局
 
-## 📸 截图
+---
+
+## 🚀 快速开始
+
+### 5 分钟上手
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/openclaw/openclaw-mobile.git
+cd openclaw-mobile
+
+# 2. 用 Android Studio 打开
+# 3. 点击 Run 按钮
+# 4. 配置 API Key
+# 5. 开始聊天！
+```
+
+详细指南请查看 [**5 分钟快速开始**](QUICKSTART.md)
+
+---
+
+## 📸 界面预览
 
 <div align="center">
   <img src="screenshots/chat.png" width="200" alt="聊天界面"/>
@@ -45,76 +68,113 @@
   <img src="screenshots/settings.png" width="200" alt="设置界面"/>
 </div>
 
-## 🚀 快速开始
+---
 
-### 环境要求
-- Android Studio Hedgehog (2024.1) 或更高版本
-- JDK 17+
-- Android SDK 34
-- NDK 25+ (用于本地推理)
+## 📖 文档导航
 
-### 克隆项目
+| 文档 | 说明 | 适合人群 |
+|------|------|---------|
+| [⚡ 快速开始](QUICKSTART.md) | 5 分钟上手指南 | 所有用户 |
+| [📱 项目说明](README.md) | 本文档 | 所有用户 |
+| [🏗️ 构建指南](BUILD_GUIDE.md) | 详细构建步骤 | 开发者 |
+| [🔐 安全架构](SECURITY.md) | 安全设计文档 | 安全研究人员 |
+| [📟 Termux 指南](TERMUX_GUIDE.md) | Termux 集成 | 高级用户 |
+| [📝 修复总结](FIXES_SUMMARY.md) | 错误修复记录 | 维护者 |
+
+---
+
+## 🏗️ 技术架构
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    UI Layer (Compose)                    │
+│  ChatScreen │ ModelsScreen │ SettingsScreen │ ApiConfig  │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                 ViewModel Layer (Hilt)                   │
+│        ChatViewModel │ ModelViewModel │ SettingsVM       │
+└─────────────────────────────────────────────────────────┘
+                            │
+            ┌───────────────┴───────────────┐
+            ▼                               ▼
+┌─────────────────────┐         ┌─────────────────────┐
+│   Repository Layer  │         │   Service Layer     │
+│  ModelRepository    │         │ ModelDownloadService│
+└─────────────────────┘         └─────────────────────┘
+            │                               │
+            ▼                               ▼
+┌─────────────────────┐         ┌─────────────────────┐
+│     API Layer       │         │  Local Inference    │
+│  DashScope API      │         │  ONNX Runtime       │
+│  Domestic Models    │         │  Model Storage      │
+└─────────────────────┘         └─────────────────────┘
+```
+
+### 技术栈
+
+| 类别 | 技术 |
+|------|------|
+| **架构** | MVVM + Clean Architecture |
+| **DI** | Hilt |
+| **网络** | Retrofit + OkHttp |
+| **本地存储** | Room + DataStore |
+| **UI** | Jetpack Compose + Material 3 |
+| **加密** | Android Keystore + Google Tink |
+| **推理** | ONNX Runtime |
+
+---
+
+## 📦 安装
+
+### 方式一：从 GitHub Releases 下载
+
+1. 访问 [Releases](https://github.com/openclaw/openclaw-mobile/releases)
+2. 下载最新 APK
+3. 在手机上安装
+
+### 方式二：自己构建
+
 ```bash
 git clone https://github.com/openclaw/openclaw-mobile.git
 cd openclaw-mobile
-```
-
-### 构建项目
-```bash
-# 使用 Android Studio 打开项目
-# 或命令行构建
 ./gradlew assembleDebug
-```
-
-### 安装 APK
-```bash
 adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-## 📖 文档
+详细步骤请查看 [构建指南](BUILD_GUIDE.md)
 
-- [📱 项目说明](README.md)
-- [🔐 安全架构](SECURITY.md)
-- [🏗️ 构建指南](BUILD_GUIDE.md)
-- [📝 贡献指南](CONTRIBUTING.md)
-- [🐛 问题报告](.github/ISSUE_TEMPLATE/bug_report.md)
+---
 
-## 🏗️ 架构
+## ⚙️ 配置
 
-```
-app/
-├── src/main/java/com/openclaw/mobile/
-│   ├── di/                    # 依赖注入 (Hilt)
-│   ├── api/                   # API 层
-│   │   ├── Models.kt          # 数据模型
-│   │   └── ModelRepository.kt # API 仓库
-│   ├── inference/             # 本地推理
-│   │   ├── LocalInferenceEngine.kt
-│   │   └── OnnxInferenceEngine.kt
-│   ├── security/              # 安全模块
-│   │   ├── SecureStorage.kt   # 加密存储
-│   │   └── PermissionManager.kt
-│   ├── service/               # 服务层
-│   │   └── ModelDownloadService.kt
-│   ├── viewmodel/             # ViewModel
-│   └── ui/                    # UI 层 (Jetpack Compose)
-└── res/                       # 资源文件
-```
+### 配置 API Key
 
-**技术栈：**
-- **架构:** MVVM + Clean Architecture
-- **DI:** Hilt
-- **网络:** Retrofit + OkHttp
-- **本地存储:** Room + DataStore
-- **UI:** Jetpack Compose + Material 3
-- **加密:** Android Keystore + Google Tink
-- **推理:** ONNX Runtime
+1. 打开应用 → 设置 → API Key 管理
+2. 选择你的模型提供商
+3. 输入 API Key
+4. 点击保存
+
+### 获取 API Key
+
+| 厂商 | 链接 |
+|------|------|
+| 阿里云 | https://dashscope.console.aliyun.com/apiKey |
+| 智谱 AI | https://open.bigmodel.cn/usercenter/apikeys |
+| 百度 | https://cloud.baidu.com/doc/WENXINWORKSHOP/ |
+| 讯飞 | https://console.xfyun.cn/services/cbm |
+| 零一万物 | https://platform.lingyiwanwu.com/apikeys |
+| 月之暗面 | https://platform.moonshot.cn/console/api-keys |
+
+---
 
 ## 🤝 贡献
 
 欢迎贡献代码、报告问题或提出建议！
 
 ### 开始贡献
+
 1. Fork 项目
 2. 创建分支 (`git checkout -b feature/AmazingFeature`)
 3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
@@ -123,9 +183,13 @@ app/
 
 详细指南请查看 [贡献指南](CONTRIBUTING.md)
 
+---
+
 ## 📄 开源协议
 
 本项目采用 [MIT 协议](LICENSE) 开源
+
+---
 
 ## 🙏 致谢
 
@@ -136,6 +200,9 @@ app/
 - [ONNX Runtime](https://onnxruntime.ai/)
 - [阿里云 DashScope](https://www.aliyun.com/product/dashscope)
 - [ModelScope](https://modelscope.cn/)
+- [OpenClaw](https://github.com/openclaw/openclaw)
+
+---
 
 ## 📞 联系方式
 
@@ -143,37 +210,12 @@ app/
 - **Discord:** [加入社区](https://discord.gg/clawd)
 - **邮箱:** hello@openclaw.ai
 
-## 🗺️ 路线图
-
-### v1.0 (当前版本)
-- ✅ 基础聊天功能
-- ✅ 云端 API 集成
-- ✅ 安全加密存储
-- ✅ Material 3 UI
-
-### v1.1 (计划中)
-- ⏳ 本地模型推理
-- ⏳ 语音输入/输出
-- ⏳ 对话历史导出
-
-### v1.2 (计划中)
-- ⏳ 图片理解
-- ⏳ 多模态支持
-- ⏳ 主题定制
-
-## 📊 项目统计
-
-- **代码行数:** ~6,300 行
-- **Kotlin 文件:** 18 个
-- **贡献者:** 1 人
-- **创建日期:** 2026-03-14
-
 ---
 
 <div align="center">
 
 **Made with ❤️ by OpenClaw Team**
 
-[⬆️ 返回顶部](#openclaw-mobile)
+[⬆️ 返回顶部](#openclaw-mobile-)
 
 </div>
